@@ -3,22 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class PlayerMove : NetworkBehaviour {
+public class PlayerMove : NetworkBehaviour
+{
     public GameObject bulletPrefab;
 
-    // Use this for initialization
-    void Start () {
-		
-	}
-
-    // Make the hosting player's color red
     public override void OnStartLocalPlayer()
     {
         GetComponent<MeshRenderer>().material.color = Color.red;
     }
 
-    // Update is called once per frame
-    void Update () {
+    [Command]
+    void CmdFire()
+    {
+        // This [Command] code is run on the server!
+
+        // create the bullet object locally
+        var bullet = (GameObject)Instantiate(
+             bulletPrefab,
+             transform.position - transform.forward,
+             Quaternion.identity);
+
+        bullet.GetComponent<Rigidbody>().velocity = -transform.forward * 4;
+
+        // spawn the bullet on the clients
+        NetworkServer.Spawn(bullet);
+
+        // when the bullet is destroyed on the server it will automaticaly be destroyed on clients
+        Destroy(bullet, 2.0f);
+    }
+
+    void Update()
+    {
         if (!isLocalPlayer)
             return;
 
@@ -29,22 +44,8 @@ public class PlayerMove : NetworkBehaviour {
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Fire();
+            // Command function is called from the client, but invoked on the server
+            CmdFire();
         }
-    }
-
-    void Fire()
-    {
-        // create the bullet object from the bullet prefab
-        var bullet = (GameObject)Instantiate(
-            bulletPrefab,
-            transform.position - transform.forward,
-            Quaternion.identity);
-
-        // make the bullet move away in front of the player
-        bullet.GetComponent<Rigidbody>().velocity = -transform.forward * 4;
-
-        // make bullet disappear after 2 seconds
-        Destroy(bullet, 2.0f);
     }
 }
