@@ -29,5 +29,7 @@ sysinfo.txt
 *.apk
 *.unitypackage
 *.exe
+*.pdb
+
 
 *_Data/
